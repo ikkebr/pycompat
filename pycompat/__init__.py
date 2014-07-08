@@ -71,7 +71,7 @@ if major < 2:
 else:
     MAX_SIZE = 2**32
 
-class _ImmutableObject:
+class _ImmutableObject(object):
 
     def __setattr__(self, name, value):
         if self.__dict__.get(name):
@@ -82,32 +82,6 @@ class _ImmutableObject:
 class _PythonVersion(_ImmutableObject):
 
     def __init__(self):
-
-        self.is1xx = major == 1
-
-        self.is10x = self.is1xx and minor == 0
-        self.is15x = self.is1xx and minor == 5
-        self.is16x = self.is1xx and minor == 6
-
-        self.is2xx = major == 2
-
-        self.is20x = self.is2xx and minor == 0
-        self.is21x = self.is2xx and minor == 1
-        self.is22x = self.is2xx and minor == 2
-        self.is23x = self.is2xx and minor == 3
-        self.is24x = self.is2xx and minor == 4
-        self.is25x = self.is2xx and minor == 5
-        self.is26x = self.is2xx and minor == 6
-        self.is27x = self.is2xx and minor == 7
-
-        self.is3xx = major == 3
-
-        self.is30x = self.is3xx and minor == 0
-        self.is31x = self.is3xx and minor == 1
-        self.is32x = self.is3xx and minor == 2
-        self.is33x = self.is3xx and minor == 3
-        self.is34x = self.is3xx and minor == 4
-        self.is35x = self.is3xx and minor == 5
 
         if _v > (2, 6):
             # Only 2.6+
@@ -151,6 +125,20 @@ class _PythonVersion(_ImmutableObject):
 
     def is_eq(self, major, minor=0, micro=0):
         return (major, minor, micro) == _v
+
+    def __getattribute__(self, name):
+        if isinstance(name, basestring) and len(name) >= 5 and name[:3] in ['is1','is2', 'is3']:
+            n_major = int(name[2])
+
+            if name[3] == 'x':
+                return True and n_major == major
+
+            if name[4] == 'x':
+                return True and n_major == major and int(name[3]) == minor
+
+            return True and n_major == major and int(name[3]) == minor and int(name[4]) == micro
+                        
+        return object.__getattribute__(self, name)
 
 class _SystemVersion(_ImmutableObject):
 
